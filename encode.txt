@@ -1,0 +1,10 @@
+all code:
+o 111
+h 1101
+d 1100
+l 10
+w 011
+  010
+r 001
+e 000
+encode text:Ñ]>l
