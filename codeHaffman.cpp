@@ -22,11 +22,11 @@ string binaryToAscii(const string& binaryString) {
 class Node
 { 	char str;
     int freq = 0;
-    Node* next = NULL;
-    Node* left = NULL;
-    Node* right = NULL;
+    Node* next = nullptr;
+    Node* left = nullptr;
+    Node* right = nullptr;
  public:
-    Node(char s, int fr=0, Node* N=NULL, Node* L=NULL, Node* R=NULL)
+    Node(char s, int fr=0, Node* N=nullptr, Node* L=nullptr, Node* R=nullptr)
       {str = s; freq = fr;   next = N; left = L; right = R;}
 
  friend class Code;
@@ -36,23 +36,29 @@ class Node
 class Code
 {	Node* root;
  public:
-    Code() { root = NULL;}
+    Code() { root = nullptr;}
     Code(string);
-    ~Code(){ if(root) delete []root; root = NULL;};
+    ~Code(){ if(root) delete []root; root = nullptr;};
     void PrintList();
-    void PrintTree(int,Node *);
-    void encode(Node* root, string str,
-      unordered_map<char, string> &huffmanCode);
+    void PrintTree(Node *, ofstream &);
+    void encode(Node* root, string str, unordered_map<char, string> &huffmanCode);
     Node* GetHead() {return root;} 
     void FormTree();	 
-    void DecodeText(string code);
-    void printTree();
+    void printTree(ofstream &);
+    string CodeText(string);
+    string Decodetext(string);
     void HaffmanCode(string s);
-    void decode(Node* root, int &index,const string & str);
-  string trueDecode(Node* root, const string& encodedText);
+    string trueDecode(Node* root, const string& encodedText);
 };
 
 
+
+  string Code:: Decodetext(string code){
+    string s = trueDecode(root, code);
+    return s;
+  }
+  
+  
   string Code::trueDecode(Node* root, const string& encodedText) {
       Node* current = root;
       string decodedText = "";
@@ -61,7 +67,7 @@ class Code
               current = current->left;
           } else {
               current = current->right;
-          }
+          } 
           if (current->left == nullptr && current->right == nullptr) {
               decodedText += current->str;
               current = root;
@@ -72,43 +78,43 @@ class Code
   
 
 
-void Code::printTree(){
-    PrintTree(0, root);
+void Code::printTree(ofstream& out){
+    PrintTree(root, out);
 }
 
-void Code::PrintTree(int level, Node* node) {
-    if (node != NULL) {
-        cout << node->freq << "(" << node->str << ")" << " Level: " << level << endl;
-        PrintTree(level + 1, node->left);  
-        PrintTree(level + 1, node->right); 
+void Code::PrintTree(Node* node, ofstream & out) {
+    if (node != nullptr) {
+
+        if(node -> str != '\0') {
+          string s = "";
+          s += node -> str;
+          out << s << ":" << node->freq  << endl;
+        }
+        PrintTree(node->left, out);  
+        PrintTree(node->right, out); 
     }
 }
 
-
-void Code:: HaffmanCode(string S){
+string Code:: CodeText(string S){
     unordered_map<char, string> huffmanCode;
     (*this).encode((*this).GetHead(), "", huffmanCode);
     string codedText = "";
     for (char i : S) {
         codedText += huffmanCode[i];
     }
-    ofstream out;
-    out.open("encode.txt");
-    if (out.is_open())
-    {   
-        out << "all code:" << endl;
-        for(auto it = huffmanCode.begin(); it != huffmanCode.end(); it++) out << it->first << " " << it->second << endl;
-        out << "encode text:" << binaryToAscii(codedText) << endl;
-    }
-    out.close();
-    string decodedtext = (*this).trueDecode(root, codedText);   
-    out.open("decode.txt");     
-    if (out.is_open())
-    {
-        out <<" decode text:"<<decodedtext << endl;
-    }
-    out.close(); 
-}
+    return codedText;
+    // ofstream out;
+    // out.open("encode.txt");
+    // if (out.is_open())
+    // {   
+    //     out << "all code:" << endl;
+    //     for(auto it = huffmanCode.begin(); it != huffmanCode.end(); it++) out << it->first << " " << it->second << endl;
+    //     out << "encode text:" << binaryToAscii(codedText) << endl;
+    // }
+} 
+
+
+
 
 
 
@@ -130,14 +136,14 @@ void Code:: encode(Node* root, string str,
 }
 
 void Code::FormTree() {
-    while (root->next != NULL){
+    while (root->next != nullptr){
         Node *p = root;
         Node *q = root->next;
-        Node *r = new Node('\0', p->freq + q->freq, NULL, p, q);
+        Node *r = new Node('\0', p->freq + q->freq, nullptr, p, q);
         root = q -> next;
         p->next = nullptr;
         q->next = nullptr;
-        if (root == NULL || r->freq < root->freq) {
+        if (root == nullptr || r->freq < root->freq) {
             r->next = root;
             root = r;
         } else {
@@ -153,7 +159,7 @@ void Code::FormTree() {
 
 void Code:: PrintList(){
   Node *p = root;
-  while(p != NULL){
+  while(p != nullptr){
     cout << p -> freq << " ";
     p = p -> next;
   }
@@ -163,19 +169,19 @@ void Code:: PrintList(){
 
 Code:: Code(string S){
   unordered_map<char, int> freq;
-  root = NULL;
+  root = nullptr;
   for (char ch: S) {
     freq[ch]++;
   } 
  for (auto pair: freq){
-      Node* p = new Node(pair.first, pair.second, NULL, NULL);
-      if (root == NULL || p -> freq < root -> freq) {
+      Node* p = new Node(pair.first, pair.second, nullptr, nullptr);
+      if (root == nullptr || p -> freq < root -> freq) {
               if(root) p -> next = root;
               root = p;
       } 
       else {
               Node* current = root;
-              while (current->next != NULL && p -> freq > current->next->freq) {
+              while (current->next != nullptr && p -> freq > current->next->freq) {
                   current = current->next;
               }
               p -> next = current->next;
@@ -186,10 +192,59 @@ Code:: Code(string S){
 
 int main() {
   string S;
+  string cod;
+  string decod;
+  bool flag = true;
   ifstream in("text.txt");
-  if (in.is_open()) getline(in, S);
-  in.close();   
+  char a;
+  if (in.is_open()){
+    while (!in.eof()) {
+            in.get(a);
+            S += a;
+    }
+  }
+  in.close();
+
   Code c(S);
   c.FormTree();
-  c.HaffmanCode(S);
+
+  
+
+  while(flag){
+
+  int x;
+  cout << endl;
+  cout << "выберите один из вариантов" << endl;
+  cout << "1) узнать кодируемый текст" << endl;
+  cout << "2) закодировать текст" << endl;
+  cout <<"3) декодировать текст" << endl;
+  cout << "4) выход" << endl;
+
+  cin >> x;
+
+
+  if(x == 1) cout << S << endl;   
+  else if(x == 2){
+      cod = c.CodeText(S);
+      ofstream out("encode.txt");
+      if(out.is_open()){
+        c.printTree(out);
+        string Code = binaryToAscii(cod);
+        out << Code << endl;
+      }
+      out.close();
+  }
+    
+  else if(x == 3){  
+    if(cod.size() > 0){
+      decod = c.Decodetext(cod);
+      ofstream fout("decode.txt");
+      if(fout.is_open()) fout << decod << endl;
+      fout.close();
+    }
+    else cout << "неизвестна кодируемая строка" << endl;
+    }
+
+  else if(x == 4) flag = false;
+  }
 }
